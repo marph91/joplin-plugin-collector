@@ -1,0 +1,4 @@
+/* https://discourse.joplinapp.org/t/resize-plugin-dialog/14552/6 */
+#joplin-plugin-content {
+  min-width: 400px;
+}
