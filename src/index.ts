@@ -1,11 +1,32 @@
+import * as fs from 'fs';
+import nodeFetch from "node-fetch";
+import * as os from 'os';
+import * as path from 'path';
+
 import { TMDB } from "tmdb-ts";
 
 import joplin from "api";
 import { MenuItemLocation, SettingItemType } from "api/types";
 
-const tmdbLinkRegex = new RegExp("https://www.themoviedb.org/(movie|tv)/([0-9]*)");
+const tmdbLinkRegex = new RegExp(
+  "https://www.themoviedb.org/(movie|tv)/([0-9]*)"
+);
 const watchStateRegex = new RegExp("- watch state: (.*)");
 const lastWatchedRegex = new RegExp("- last watched: (.*)");
+
+async function download(url, filename) {
+  const res = await nodeFetch(url);
+  await new Promise<void>((resolve, reject) => {
+    const fileStream = fs.createWriteStream(filename);
+    res.body.pipe(fileStream);
+    res!.body!.on("error", (err) => {
+      reject(err);
+    });
+    fileStream.on("finish", function () {
+      resolve();
+    });
+  });
+}
 
 async function searchAndChoose(tmdb, chooseItemDialog, noteTitle) {
   const dialogs = joplin.views.dialogs;
@@ -75,6 +96,13 @@ joplin.plugins.register({
         type: SettingItemType.String,
         section: "collectorSection",
         label: "TMDB API Token",
+        public: true,
+      },
+      tmdbIncludeThumbnail: {
+        value: true,
+        type: SettingItemType.Bool,
+        section: "collectorSection",
+        label: "TMDB Include Thumbnail",
         public: true,
       },
     });
@@ -240,10 +268,42 @@ joplin.plugins.register({
 
           // update the Joplin note
           const newContent = newContentArray.join("\n");
-          const noteBody =
+          let noteBody =
             !note.body || overwrite
               ? newContent
               : `${newContent}\n\n***\n\n` + note.body;
+
+          if (
+            (await joplin.settings.value("tmdbIncludeThumbnail")) &&
+            details.poster_path
+          ) {
+            // strip the leading slash, so we dont need to create a new dir
+            const tempFile = path.join(
+              os.tmpdir(),
+              "joplin_collector_" + details.poster_path.slice(1)
+            );
+            // image sizes: https://www.themoviedb.org/talk/53c11d4ec3a3684cf4006400
+            await download(
+              "https://image.tmdb.org/t/p/w185" + details.poster_path,
+              tempFile
+            );
+
+            // https://github.com/personalizedrefrigerator/joplin-plugin-freehand-drawing/blob/3026eff1aa9a6436bc4b90eea6b931cfabcfa568/src/Resource.ts#L146
+            let resource;
+            try {
+              resource = await joplin.data.post(
+                ["resources"],
+                null,
+                { title: details.poster_path.slice(1) },
+                [{ path: tempFile }]
+              );
+              noteBody += `\n\n![](:/${resource.id})`;
+            } catch (error) {
+              console.error("collector: creating resource failed");
+              console.error(error);
+            }
+          }
+
           // related: https://discourse.joplinapp.org/t/how-to-show-the-newest-note-after-using-data-put/22797
           // instantly update the note body of the current note
           await joplin.commands.execute("editor.setText", noteBody);
