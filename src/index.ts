@@ -247,23 +247,24 @@ joplin.plugins.register({
             : new Date().toISOString().slice(0, 10);
 
           const newContentArray = [
-            `- watch state: ${watchState}`,
-            `- last watched: ${lastWatched}`,
-            `- original title: ${title}`,
-            `- year: ${year.slice(0, 4)}`,
-            `- tmdb id: [${tmdbId}](https://www.themoviedb.org/${mediaType}/${tmdbId})`,
-            `- media type: ${mediaType === "tv" ? "series" : "movie"}`,
-            `- genres: ${details.genres.map((genre) => genre.name).join(", ")}`,
-            `- providers: ${Array.from(providersFiltered).join(", ")}`,
-            `- cast: ${credits.cast
+            `- Watch State: ${watchState}`,
+            `- Last Watched: ${lastWatched}`,
+            `- Original Title: ${title}`,
+            `- Year: ${year.slice(0, 4)}`,
+            `- TMDB ID: [${tmdbId}](https://www.themoviedb.org/${mediaType}/${tmdbId})`,
+            `- Media Type: ${mediaType === "tv" ? "Series" : "Movie"}`,
+            `- Genres: ${details.genres.map((genre) => genre.name).join(", ")}`,
+            `- Providers: ${Array.from(providersFiltered).join(", ")}`,
+            `- Cast: ${credits.cast
               .slice(0, 10)
               .map((person) => person.name)
               .join(", ")}`,
-            `- directors: ${directors.join(", ")}`,
-            `- producers: ${producers.join(", ")}`,
-            `- writers: ${writers.join(", ")}`,
-            `- composers: ${composers.join(", ")}`,
-            `- plot: ${details.overview}`,
+            "- Crew:",
+            `  - Directors: ${directors.join(", ")}`,
+            `  - Producers: ${producers.join(", ")}`,
+            `  - Writers: ${writers.join(", ")}`,
+            `  - Composers: ${composers.join(", ")}`,
+            `- Plot: ${details.overview}`,
           ];
 
           // update the Joplin note
