@@ -181,6 +181,7 @@ joplin.plugins.register({
             );
           }
 
+          // TODO: german title: https://github.com/blakejoy/tmdb-ts/issues/39
           console.log(`collector: fetch details: ${mediaType} ${tmdbId}`);
           let details;
           let credits;
@@ -189,13 +190,13 @@ joplin.plugins.register({
           let year;
           if (mediaType === "movie") {
             details = await tmdb.movies.details(tmdbId);
-            title = details.title;
+            title = details.original_title;
             year = details.release_date;
             credits = await tmdb.movies.credits(tmdbId);
             providers = await tmdb.movies.watchProviders(tmdbId);
           } else if (mediaType === "tv") {
             details = await tmdb.tvShows.details(tmdbId);
-            title = details.name;
+            title = details.original_name;
             year = details.first_air_date;
             credits = await tmdb.tvShows.aggregateCredits(tmdbId);
             providers = await tmdb.tvShows.watchProviders(tmdbId);
