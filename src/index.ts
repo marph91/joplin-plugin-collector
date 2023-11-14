@@ -11,8 +11,8 @@ import { MenuItemLocation, SettingItemType } from "api/types";
 const tmdbLinkRegex = new RegExp(
   "https://www.themoviedb.org/(movie|tv)/([0-9]*)"
 );
-const watchStateRegex = new RegExp("- watch state: (.*)");
-const lastWatchedRegex = new RegExp("- last watched: (.*)");
+const watchStateRegex = new RegExp("- Watch State: (.*)");
+const lastWatchedRegex = new RegExp("- Last Watched: (.*)");
 
 class DefaultDict {
   // https://stackoverflow.com/a/44622467/7410886
