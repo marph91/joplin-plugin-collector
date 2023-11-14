@@ -28,6 +28,6 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "tmdb-ts": "^1.4.0"
+    "tmdb-ts": "^1.5.0"
   }
 }

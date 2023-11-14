@@ -191,7 +191,7 @@ joplin.plugins.register({
             details = await tmdb.tvShows.details(tmdbId);
             title = details.name;
             year = details.first_air_date;
-            credits = await tmdb.tvShows.credits(tmdbId);
+            credits = await tmdb.tvShows.aggregateCredits(tmdbId);
             providers = await tmdb.movies.watchProviders(tmdbId);
           }
 
