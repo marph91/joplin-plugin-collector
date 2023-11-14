@@ -14,6 +14,24 @@ const tmdbLinkRegex = new RegExp(
 const watchStateRegex = new RegExp("- watch state: (.*)");
 const lastWatchedRegex = new RegExp("- last watched: (.*)");
 
+class DefaultDict {
+  // https://stackoverflow.com/a/44622467/7410886
+  constructor(defaultInit) {
+    return new Proxy(
+      {},
+      {
+        get: (target, name) =>
+          name in target
+            ? target[name]
+            : (target[name] =
+                typeof defaultInit === "function"
+                  ? new defaultInit().valueOf()
+                  : defaultInit),
+      }
+    );
+  }
+}
+
 async function download(url, filename) {
   const res = await nodeFetch(url);
   await new Promise<void>((resolve, reject) => {
@@ -163,18 +181,6 @@ joplin.plugins.register({
             );
           }
 
-          //////////////////
-          // {
-          //   import { TMDB } from "tmdb-ts";
-          //   const tmdb = new TMDB("myKey");
-          //   const tmdbId = 87739;
-          //   const credits = await tmdb.tvShows.credits(tmdbId);
-          //   const providers = await tmdb.movies.watchProviders(tmdbId);
-          //   console.log(credits);
-          //   console.log(providers);
-          // }
-          //////////////////
-
           console.log(`collector: fetch details: ${mediaType} ${tmdbId}`);
           let details;
           let credits;
@@ -221,24 +227,15 @@ joplin.plugins.register({
             console.log("collector: couldn't fetch providers");
           }
 
-          let directors = [];
-          let producers = [];
-          let writers = [];
-          let composers = [];
+          let jobDict = new DefaultDict(Set);
           for (const person of credits.crew) {
-            switch (person.job) {
-              case "Director":
-                directors.push(person.name);
-                break;
-              case "Producer":
-                producers.push(person.name);
-                break;
-              case "Screenplay":
-                writers.push(person.name);
-                break;
-              case "Original Music Composer":
-                composers.push(person.name);
-                break;
+            // compensate the difference between credits and aggregateCredits
+            const jobs = person.job
+              ? [person.job]
+              : person.jobs.map((item) => item.job);
+            console.log(jobs);
+            for (const job of jobs) {
+              jobDict[job].add(person.name);
             }
           }
 
@@ -265,10 +262,12 @@ joplin.plugins.register({
               .map((person) => person.name)
               .join(", ")}`,
             "- Crew:",
-            `  - Directors: ${directors.join(", ")}`,
-            `  - Producers: ${producers.join(", ")}`,
-            `  - Writers: ${writers.join(", ")}`,
-            `  - Composers: ${composers.join(", ")}`,
+            `  - Directors: ${Array.from(jobDict["Director"]).join(", ")}`,
+            `  - Producers: ${Array.from(jobDict["Producer"]).join(", ")}`,
+            `  - Writers: ${Array.from(jobDict["Screenplay"]).join(", ")}`,
+            `  - Composers: ${Array.from(
+              jobDict["Original Music Composer"]
+            ).join(", ")}`,
             `- Plot: ${details.overview}`,
           ];
 
