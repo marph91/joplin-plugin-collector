@@ -233,7 +233,6 @@ joplin.plugins.register({
             const jobs = person.job
               ? [person.job]
               : person.jobs.map((item) => item.job);
-            console.log(jobs);
             for (const job of jobs) {
               jobDict[job].add(person.name);
             }
