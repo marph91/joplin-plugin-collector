@@ -1,7 +1,7 @@
-import * as fs from 'fs';
+import * as fs from "fs";
 import nodeFetch from "node-fetch";
-import * as os from 'os';
-import * as path from 'path';
+import * as os from "os";
+import * as path from "path";
 
 import { TMDB } from "tmdb-ts";
 
@@ -192,16 +192,21 @@ joplin.plugins.register({
             title = details.name;
             year = details.first_air_date;
             credits = await tmdb.tvShows.aggregateCredits(tmdbId);
-            providers = await tmdb.movies.watchProviders(tmdbId);
+            providers = await tmdb.tvShows.watchProviders(tmdbId);
           }
 
           let providersFiltered = new Set();
           if ("results" in providers && "DE" in providers.results) {
-            for (const provider of providers.results.DE.rent) {
+            const rentFlatrateProviders = (
+              providers.results.DE.rent || []
+            ).concat(providers.results.DE.flatrate || []);
+            for (const provider of rentFlatrateProviders) {
               if (provider.provider_name.includes("Amazon")) {
                 providersFiltered.add("Amazon");
               } else if (provider.provider_name.includes("Joyn")) {
                 providersFiltered.add("Joyn");
+              } else if (provider.provider_name.includes("Netflix")) {
+                providersFiltered.add("Netflix");
               } else if (provider.provider_name.includes("Paramount")) {
                 providersFiltered.add("Paramount");
               } else if (provider.provider_name.includes("Sky")) {
