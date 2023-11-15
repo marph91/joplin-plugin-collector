@@ -1,5 +1,9 @@
-# Joplin Plugin
+# joplin-plugin-collector
 
-This is your new Joplin plugin. It is suggested that you use this README file to document your plugin.
+Add information to a movie or series.
 
-For information on how to build or publish the plugin, please see [GENERATOR_DOC.md](./GENERATOR_DOC.md)
+Workflow:
+
+1. Write a movie or series title as note title (mobile or desktop)
+2. Right click and choose "Collector: Fetch Data" from the context menu (desktop only)
+3. The note body should contain information about the movie/series
