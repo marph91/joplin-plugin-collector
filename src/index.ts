@@ -13,6 +13,7 @@ const tmdbLinkRegex = new RegExp(
 );
 const watchStateRegex = new RegExp("- Watch State: (.*)");
 const lastWatchedRegex = new RegExp("- Last Watched: (.*)");
+const imageRegex = new RegExp(/\!\[\]\(:\/(\w*)\)/);
 
 class DefaultDict {
   // https://stackoverflow.com/a/44622467/7410886
@@ -278,34 +279,39 @@ joplin.plugins.register({
               ? newContent
               : `${newContent}\n\n***\n\n` + note.body;
 
-          if (
-            (await joplin.settings.value("tmdbIncludeThumbnail")) &&
-            details.poster_path
-          ) {
-            // strip the leading slash, so we dont need to create a new dir
-            const tempFile = path.join(
-              os.tmpdir(),
-              "joplin_collector_" + details.poster_path.slice(1)
-            );
-            // image sizes: https://www.themoviedb.org/talk/53c11d4ec3a3684cf4006400
-            await download(
-              "https://image.tmdb.org/t/p/w185" + details.poster_path,
-              tempFile
-            );
+          if (await joplin.settings.value("tmdbIncludeThumbnail")) {
+            const imageMatch = note.body.match(imageRegex);
+            if (imageMatch) {
+              // take the ressource id that is already in the note
+              noteBody += `\n\n![](:/${imageMatch[1]})`;
+            } else if (details.poster_path) {
+              // download and attach the image as new ressource
 
-            // https://github.com/personalizedrefrigerator/joplin-plugin-freehand-drawing/blob/3026eff1aa9a6436bc4b90eea6b931cfabcfa568/src/Resource.ts#L146
-            let resource;
-            try {
-              resource = await joplin.data.post(
-                ["resources"],
-                null,
-                { title: details.poster_path.slice(1) },
-                [{ path: tempFile }]
+              // strip the leading slash, so we dont need to create a new dir
+              const tempFile = path.join(
+                os.tmpdir(),
+                "joplin_collector_" + details.poster_path.slice(1)
               );
-              noteBody += `\n\n![](:/${resource.id})`;
-            } catch (error) {
-              console.error("collector: creating resource failed");
-              console.error(error);
+              // image sizes: https://www.themoviedb.org/talk/53c11d4ec3a3684cf4006400
+              await download(
+                "https://image.tmdb.org/t/p/w185" + details.poster_path,
+                tempFile
+              );
+
+              // https://github.com/personalizedrefrigerator/joplin-plugin-freehand-drawing/blob/3026eff1aa9a6436bc4b90eea6b931cfabcfa568/src/Resource.ts#L146
+              let resource;
+              try {
+                resource = await joplin.data.post(
+                  ["resources"],
+                  null,
+                  { title: details.poster_path.slice(1) },
+                  [{ path: tempFile }]
+                );
+                noteBody += `\n\n![](:/${resource.id})`;
+              } catch (error) {
+                console.error("collector: creating resource failed");
+                console.error(error);
+              }
             }
           }
 
