@@ -117,6 +117,13 @@ joplin.plugins.register({
         label: "TMDB API Token",
         public: true,
       },
+      tmdbOverwriteTitle: {
+        value: true,
+        type: SettingItemType.Bool,
+        section: "collectorSection",
+        label: "TMDB Overwrite the note title",
+        public: true,
+      },
       tmdbIncludeThumbnail: {
         value: true,
         type: SettingItemType.Bool,
@@ -188,16 +195,19 @@ joplin.plugins.register({
           let credits;
           let providers;
           let title;
+          let originalTitle;
           let year;
           if (mediaType === "movie") {
             details = await tmdb.movies.details(tmdbId);
-            title = details.original_title;
+            title = details.title;
+            originalTitle = details.original_title;
             year = details.release_date;
             credits = await tmdb.movies.credits(tmdbId);
             providers = await tmdb.movies.watchProviders(tmdbId);
           } else if (mediaType === "tv") {
             details = await tmdb.tvShows.details(tmdbId);
-            title = details.original_name;
+            title = details.name;
+            originalTitle = details.original_name;
             year = details.first_air_date;
             credits = await tmdb.tvShows.aggregateCredits(tmdbId);
             providers = await tmdb.tvShows.watchProviders(tmdbId);
@@ -252,7 +262,7 @@ joplin.plugins.register({
           const newContentArray = [
             `- Watch State: ${watchState}`,
             `- Last Watched: ${lastWatched}`,
-            `- Original Title: ${title}`,
+            `- Original Title: ${originalTitle}`,
             `- Year: ${year.slice(0, 4)}`,
             `- TMDB ID: [${tmdbId}](https://www.themoviedb.org/${mediaType}/${tmdbId})`,
             `- Media Type: ${mediaType === "tv" ? "Series" : "Movie"}`,
@@ -318,10 +328,14 @@ joplin.plugins.register({
           // related: https://discourse.joplinapp.org/t/how-to-show-the-newest-note-after-using-data-put/22797
           // instantly update the note body of the current note
           await joplin.commands.execute("editor.setText", noteBody);
-          // permanently update the note body
+          // TODO: make title change visible directly
+          const overwriteTitle = await joplin.settings.value(
+            "tmdbOverwriteTitle"
+          );
           await joplin.data.put(["notes", noteId], null, {
-            // keep the user-written title
-            // title: title,
+            // overwrite the user-written title if configured
+            ...(overwriteTitle && { title: title }),
+            // always update the note body
             body: noteBody,
           });
         }
