@@ -216,8 +216,11 @@ joplin.plugins.register({
           let providersFiltered = new Set();
           if ("results" in providers && "DE" in providers.results) {
             const rentFlatrateProviders = (
+              providers.results.DE.ads || []
+            ).concat(
+              providers.results.DE.flatrate || [],
               providers.results.DE.rent || []
-            ).concat(providers.results.DE.flatrate || []);
+            );
             for (const provider of rentFlatrateProviders) {
               if (provider.provider_name.includes("Amazon")) {
                 providersFiltered.add("Amazon");
