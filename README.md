@@ -1,6 +1,8 @@
 # joplin-plugin-collector
 
-Add information to a movie or series.
+Add information to a movie or series title.
+
+Prerequisites: [Get a TMDB API key](https://developer.themoviedb.org/docs) and add it in the plugin settings.
 
 Workflow:
 
