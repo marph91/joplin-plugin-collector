@@ -13,6 +13,7 @@ const tmdbLinkRegex = new RegExp(
 );
 const watchStateRegex = new RegExp("- Watch State: (.*)");
 const lastWatchedRegex = new RegExp("- Last Watched: (.*)");
+const yearRegex = new RegExp("- Year: (.*)");
 const imageRegex = new RegExp(/\!\[\]\(:\/(\w*)\)/);
 
 class DefaultDict {
@@ -107,6 +108,51 @@ async function searchAndChoose(tmdb, chooseItemDialog, noteTitle) {
   return [mediaType, tmdbId];
 }
 
+async function selectDuplicatesToDelete(
+  titleYear,
+  candidates,
+  deleteDuplicateDialog
+) {
+  const dialogs = joplin.views.dialogs;
+
+  // create form
+  let div = document.createElement("div");
+  div.setAttribute("style", "white-space: nowrap;");
+  let form = document.createElement("form");
+  form.name = "item";
+  for (const candidate of candidates) {
+    const watchStateMatch = candidate.body.match(watchStateRegex);
+    const watchState = watchStateMatch ? watchStateMatch[1] : "undefined";
+    const lastWatchedMatch = candidate.body.match(lastWatchedRegex);
+    const lastWatched = lastWatchedMatch ? lastWatchedMatch[1] : "undefined";
+
+    let input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = candidate.id;
+    input.value = candidate.id;
+    input.name = candidate.id;
+    form.appendChild(input);
+    let label = document.createElement("label");
+    label.htmlFor = candidate.id;
+    label.textContent = `${watchState} [${lastWatched}]`;
+    form.appendChild(label);
+    let br = document.createElement("br");
+    form.appendChild(br);
+    div.append(form);
+  }
+  await dialogs.setHtml(
+    deleteDuplicateDialog,
+    `<p>Select note to delete: ${titleYear}</p>` + form.outerHTML
+  );
+
+  // get result of dialog
+  const result = await dialogs.open(deleteDuplicateDialog);
+  if (result.id === "cancel") return [];
+
+  const formData: [string, string] = result.formData.item;
+  return Object.values(formData);
+}
+
 joplin.plugins.register({
   onStart: async function () {
     await joplin.settings.registerSettings({
@@ -140,6 +186,54 @@ joplin.plugins.register({
       chooseItemDialog,
       "./adjust_dialog_size.css"
     );
+    const deleteDuplicateDialog = await dialogs.create("deleteDuplicateDialog");
+
+    await joplin.commands.register({
+      name: "contextMenuFindDuplicates",
+      label: "Collector: Find Duplicates",
+      enabledCondition: "oneFolderSelected",
+      execute: async (folderId: string, targetIdx?: number) => {
+        // get all notes in the folder
+        let allNotes = [];
+        let page = 1;
+        let response;
+        do {
+          response = await joplin.data.get(["folders", folderId, "notes"], {
+            page: page,
+            fields: ["id", "title", "body"],
+          });
+          page += 1;
+          allNotes.push(...response.items);
+        } while (response.has_more);
+
+        // collect in a dict to identify duplicated titles
+        let noteDict = new DefaultDict(Array);
+        for (const note of allNotes) {
+          const yearMatch = note.body.match(yearRegex);
+          const year = yearMatch ? yearMatch[1] : null;
+          noteDict[`${note.title} [${year}]`].push({
+            id: note.id,
+            body: note.body,
+          });
+        }
+
+        // select duplicates for deletion
+        for (const [titleYear, notes] of Object.entries(noteDict)) {
+          if (notes.length > 1) {
+            const noteIdsToDelete = await selectDuplicatesToDelete(
+              titleYear,
+              notes,
+              deleteDuplicateDialog
+            );
+
+            for (const id of noteIdsToDelete) {
+              console.log(`collector: delete note ${id}`);
+              await joplin.data.delete(["notes", id]);
+            }
+          }
+        }
+      },
+    });
 
     await joplin.commands.register({
       name: "contextMenuCollectorFetchData",
@@ -182,6 +276,7 @@ joplin.plugins.register({
             // overwrite all data in the note
             overwrite = true;
           } else {
+            // TODO: throws an exception if null is returned
             [mediaType, tmdbId] = await searchAndChoose(
               tmdb,
               chooseItemDialog,
@@ -348,6 +443,11 @@ joplin.plugins.register({
       "contextMenuCollectorFetchData",
       "contextMenuCollectorFetchData",
       MenuItemLocation.NoteListContextMenu
+    );
+    await joplin.views.menuItems.create(
+      "contextMenuFindDuplicates",
+      "contextMenuFindDuplicates",
+      MenuItemLocation.FolderContextMenu
     );
   },
 });
