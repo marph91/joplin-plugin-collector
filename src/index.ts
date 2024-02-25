@@ -153,6 +153,12 @@ async function selectDuplicatesToDelete(
   return Object.values(formData);
 }
 
+function setToString(set) {
+  const leadingSpace = set.size == 0 ? "" : " ";
+  const content = Array.from(set).join(", ");
+  return `${leadingSpace}${content}`;
+}
+
 joplin.plugins.register({
   onStart: async function () {
     await joplin.settings.registerSettings({
@@ -365,18 +371,16 @@ joplin.plugins.register({
             `- TMDB ID: [${tmdbId}](https://www.themoviedb.org/${mediaType}/${tmdbId})`,
             `- Media Type: ${mediaType === "tv" ? "Series" : "Movie"}`,
             `- Genres: ${details.genres.map((genre) => genre.name).join(", ")}`,
-            `- Providers: ${Array.from(providersFiltered).join(", ")}`,
+            `- Providers:${setToString(providersFiltered)}`,
             `- Cast: ${credits.cast
               .slice(0, 10)
               .map((person) => person.name)
               .join(", ")}`,
             "- Crew:",
-            `  - Directors: ${Array.from(jobDict["Director"]).join(", ")}`,
-            `  - Producers: ${Array.from(jobDict["Producer"]).join(", ")}`,
-            `  - Writers: ${Array.from(jobDict["Screenplay"]).join(", ")}`,
-            `  - Composers: ${Array.from(
-              jobDict["Original Music Composer"]
-            ).join(", ")}`,
+            `  - Directors:${setToString(jobDict["Director"])}`,
+            `  - Producers:${setToString(jobDict["Producer"])}`,
+            `  - Writers:${setToString(jobDict["Screenplay"])}`,
+            `  - Composers:${setToString(jobDict["Original Music Composer"])}`,
             `- Plot: ${details.overview}`,
           ];
 
