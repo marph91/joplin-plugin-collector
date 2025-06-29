@@ -161,6 +161,13 @@ function setToString(set) {
 
 joplin.plugins.register({
   onStart: async function () {
+    // Register section
+    await joplin.settings.registerSection("collectorSection", {
+      label: "Collector",
+      iconName: "fas fa-flag-checkered",
+    });
+
+    // Register settings
     await joplin.settings.registerSettings({
       tmdbApiToken: {
         value: "",
