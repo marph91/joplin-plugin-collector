@@ -8,7 +8,8 @@
 	"author": "Marph",
 	"homepage_url": "https://github.com/marph91/joplin-plugin-collector",
 	"repository_url": "https://github.com/marph91/joplin-plugin-collector",
-	"keywords": [],
+	"platforms": ["mobile", "desktop"],
+	"keywords": ["movies", "series", "tmdb"],
 	"categories": [],
 	"screenshots": [],
 	"icons": {}
