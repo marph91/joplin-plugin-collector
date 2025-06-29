@@ -434,10 +434,6 @@ joplin.plugins.register({
             }
           }
 
-          // related: https://discourse.joplinapp.org/t/how-to-show-the-newest-note-after-using-data-put/22797
-          // instantly update the note body of the current note
-          await joplin.commands.execute("editor.setText", noteBody);
-          // TODO: make title change visible directly
           const overwriteTitle = await joplin.settings.value(
             "tmdbOverwriteTitle"
           );
@@ -445,7 +441,7 @@ joplin.plugins.register({
             // overwrite the user-written title if configured
             ...(overwriteTitle && { title: title }),
             // always update the note body
-            body: noteBody,
+            ...{body: noteBody},
           });
         }
       },
