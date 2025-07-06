@@ -434,6 +434,8 @@ joplin.plugins.register({
             }
           }
 
+          noteBody += "\n"  // final newline
+
           const overwriteTitle = await joplin.settings.value(
             "tmdbOverwriteTitle"
           );
